@@ -1,0 +1,59 @@
+<!DOCTYPE>
+<html lang="en">
+    <title>test</title>
+    <body>
+        <ul data-id="t.incredible.health">
+
+        </ul>
+        <script>
+            let foundExit = false;
+
+            class Room {
+                constructor(data) {
+                    this.description = data.description;
+                    this.left = data.left;
+                    this.right = data.right;
+                    this.back = data.back;
+                    this.atExit = data.atExit;
+                }
+            }
+
+            async function crawlTunnel(url) {
+                if (!foundExit) {
+                    const response = await fetch(`https://localhost/brett/tunnels.php?url=${url}`);
+                    const data = await response.json();
+                    const room = new Room(data);
+                    const elementNode = document.querySelector(`[data-id="${url}"]`);
+                    elementNode.insertAdjacentHTML("beforeend", `
+                    <li>Description : ${room.description}</li>
+                    <li>
+                        Left:
+                        <ul data-id="${room.left}"></ul>
+                    </li>
+                    <li>
+                        Right:
+                        <ul data-id="${room.right}"></ul>
+                    </li>
+                `);
+                    if (room.atExit === false) {
+                        if (room.left) {
+                            await crawlTunnel(room.left);
+                        }
+                        if (room.right) {
+                            await crawlTunnel(room.right);
+                        }
+                        if (!room.right && !room.left) {
+                            elementNode.insertAdjacentHTML("beforeend", `<li><b>DEAD END!</b></li>`);
+                            elementNode.style.border = "1px dotted red";
+                        }
+                    } else {
+                        foundExit = true;
+                        elementNode.insertAdjacentHTML("beforeend", `<li><b>AT EXIT!</b></li>`);
+                        elementNode.style.border = "6px solid green";
+                    }
+                }
+            }
+            crawlTunnel('t.incredible.health');
+        </script>
+    </body>
+</html>
